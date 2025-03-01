@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>选择连接类型</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="../css/reset.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="../css/main.css"
+    />
+    <script src="../js/basics.js"></script>
+  </head>
+  <body>
+    <div class="resize-fix no-drag"></div>
+    <nav class="titlebar">
+      <a class="page-title">选择连接类型</a>
+      <ul class="titlebar-buttons">
+        <li id="minimize" class="material-icons">remove</li>
+        <li id="maximize" class="material-icons">crop_square</li>
+        <li id="close" class="material-icons">close</li>
+      </ul>
+    </nav>
+    <div class="container">
+      <div class="button-host-cont">
+        <a href="host.html" id="p2p-button" class="button dark-button">
+          P2P连接
+        </a>
+      </div>
+    </div>
+  </body>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("p2p-button").click();
+      window.location.href = "host.html";
+
+      document.getElementById("close").addEventListener("click", function () {
+        window.close();
+      });
+      document
+        .getElementById("maximize")
+        .addEventListener("click", function () {
+          window.maximize();
+        });
+      document
+        .getElementById("minimize")
+        .addEventListener("click", function () {
+          window.minimize();
+        });
+    });
+  </script>
+</html>

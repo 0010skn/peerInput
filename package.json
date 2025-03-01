@@ -1,0 +1,34 @@
+{
+  "name": "PeerInput",
+  "version": "1.0.0",
+  "description": "remote-pulse - PeerInput",
+  "main": "main.js",
+  "scripts": {
+    "test": "electron .",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win"
+  },
+  "author": "Dari",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^4.1.2",
+    "electron-builder": "^25.1.8",
+    "terser": "^5.39.0"
+  },
+  "dependencies": {
+    "@jitsi/robotjs": "^0.6.13"
+  },
+  "build": {
+    
+    "electronVersion": "4.1.2",
+    "appId": "com.remote-pulse.peerinput",
+    "productName": "RemotePulse - PeerInput",
+    "copyright": "Copyright © 2025 ${author}",
+    "win": {
+      "target": [
+        "portable"
+      ]
+    }
+  }
+}

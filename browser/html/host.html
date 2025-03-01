@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>连接主机</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="../js/peer.js"></script>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="../css/reset.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="../css/main.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="../css/animations.css"
+    />
+    <script src="../js/basics.js"></script>
+    <script src="../js/host.js"></script>
+  </head>
+  <body class="dark-theme">
+    <div class="resize-fix no-drag"></div>
+    <nav class="titlebar">
+      <a href="index.html" class="page-title">连接主机</a>
+      <ul class="titlebar-buttons">
+        <li id="minimize" class="material-icons">remove</li>
+        <li id="maximize" class="material-icons">crop_square</li>
+        <li id="close" class="material-icons">close</li>
+      </ul>
+    </nav>
+    <!-- <div id="references" class="hidden">
+      <div class="message">
+        <p class="message-sender">用户</p>
+        <p class="message-text">这是占位文本</p>
+      </div>
+    </div> -->
+
+    <!-- 加载动画 -->
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">正在初始化连接...</p>
+    </div>
+
+    <div class="container">
+      <div id="connection-panel" class="panel fade-in">
+        <div class="panel-header">
+          <h1 class="id-title">您的连接码</h1>
+          <div class="id-container">
+            <input id="id-input" class="id-input" type="text" readonly />
+            <div class="tooltip" id="id-tooltip">
+              <span class="tooltip-text"
+                >这是您的唯一连接码,分享给他人以建立连接</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="button-cont">
+          <button id="copy-id" class="button highlight-button">
+            <i class="material-icons button-icon">content_copy</i>
+            <span>复制连接码</span>
+          </button>
+          <button id="generate-id" class="button dark-button">
+            <i class="material-icons button-icon">refresh</i>
+            <span>生成新连接码</span>
+          </button>
+        </div>
+
+        <div class="status-container">
+          <h2>连接状态:</h2>
+          <div class="status-indicator">
+            <span class="status-dot" id="status-dot"></span>
+            <h2 id="connection-status-text" class="status-text">未连接</h2>
+          </div>
+        </div>
+
+        <a href="index.html" id="back" class="button dark-button">
+          <i class="material-icons button-icon">arrow_back</i>
+          <span>刷新</span>
+        </a>
+
+        <a id="hide-to-tray" class="button dark-button">
+          <i class="material-icons button-icon">visibility_off</i>
+          <span>隐藏到托盘</span>
+        </a>
+
+        <div class="connections-container">
+          <h2>已连接用户:</h2>
+          <div id="connection-list" class="connection-list">
+            <span>暂无连接</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="messaging-panel" class="messaging panel hidden fade-in">
+        <div class="connection-info">
+          <h2>当前连接:</h2>
+          <h3 id="connected-peer-id">未知</h3>
+        </div>
+
+        <button id="disconnect" class="button dark-button">
+          <i class="material-icons button-icon">close</i>
+          <span>断开连接</span>
+        </button>
+
+        <div class="messages" id="messages"></div>
+
+        <!-- <div class="send-message">
+          <input
+            id="message"
+            class="message-input"
+            type="text"
+            placeholder="输入消息..."
+          />
+          <button id="send" class="button highlight-button">
+            <i class="material-icons button-icon">send</i>
+            <span>发送</span>
+          </button>
+        </div> -->
+
+        <div class="connection-status-bar">
+          <span>连接状态: </span>
+          <span id="connection-status-bar-text">未连接</span>
+        </div>
+      </div>
+
+      <!-- 提示消息 -->
+      <div id="notification" class="notification hidden">
+        <span id="notification-message"></span>
+        <button id="notification-close" class="notification-close">
+          <i class="material-icons">close</i>
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

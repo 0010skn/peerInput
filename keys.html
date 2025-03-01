@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>全功能触控键盘</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        background: #0a0a0a;
+        color: #e0e0e0;
+        font-family: "Roboto", Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        touch-action: manipulation;
+        overflow: hidden;
+      }
+
+      .touchpad {
+        flex: 1;
+        min-height: 35vh;
+        margin: 8px;
+        background: #1a1a1a;
+        border-radius: 6px;
+        border: 1px solid #333;
+        touch-action: none;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .touchpad-cursor {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #4a90e2;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .touchpad-cursor.active {
+        opacity: 0.7;
+      }
+
+      .keyboard {
+        flex-shrink: 0;
+        padding: 6px;
+        background: #1a1a1a;
+        border-top: 2px solid #333;
+      }
+
+      .row {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 4px;
+        gap: 1px;
+      }
+
+      .key {
+        background: #2a2a2a;
+        border: 1px solid #333;
+        border-radius: 3px;
+        padding: 8px 1.2vw;
+        min-width: 6.5vw;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.1s;
+        font-size: 11px;
+        flex-shrink: 1;
+        user-select: none;
+        height: 38px;
+      }
+
+      /* 特殊按键样式 */
+      .del-key {
+        background: #631111;
+        min-width: 8vw;
+      }
+      .control-key {
+        background: #444;
+        min-width: 9vw;
+      }
+      .fn-key {
+        background: #333;
+        min-width: 7vw;
+      }
+      .space {
+        flex-grow: 1;
+        max-width: 30vw;
+      }
+      .long-key {
+        min-width: 10vw;
+      }
+
+      /* 连接弹窗 */
+      .connection-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .connection-panel {
+        background-color: #222;
+        border-radius: 8px;
+        padding: 20px;
+        width: 85%;
+        max-width: 350px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+
+      .connection-panel h1 {
+        font-size: 20px;
+        margin-bottom: 15px;
+        color: #e0e0e0;
+        font-weight: 500;
+      }
+
+      .connection-panel p {
+        font-size: 14px;
+        color: #aaa;
+        margin-bottom: 15px;
+      }
+
+      .id-container {
+        position: relative;
+        margin: 15px auto;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .id-input {
+        width: 100%;
+        height: 40px;
+        padding: 0 15px;
+        background-color: #333;
+        color: #e0e0e0;
+        border: 1px solid #555;
+        border-radius: 4px;
+        font-size: 16px;
+        text-align: center;
+        letter-spacing: 1px;
+      }
+
+      .id-input:focus {
+        outline: none;
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+      }
+
+      .connect-button {
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 20px;
+        font-size: 16px;
+        margin-top: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+
+      .connect-button:hover {
+        background-color: #3a7bc8;
+      }
+
+      .connect-button:disabled {
+        background-color: #555;
+        cursor: not-allowed;
+      }
+
+      /* 加载动画 */
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #4a90e2;
+        animation: spin 1s linear infinite;
+        margin: 15px auto;
+        display: none;
+      }
+
+      .loading-spinner.active {
+        display: block;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 状态指示器 */
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px 0;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #aaa;
+        margin-right: 8px;
+      }
+
+      .status-dot.connecting {
+        background-color: #f39c12;
+        animation: blink 1.5s infinite;
+      }
+
+      .status-dot.connected {
+        background-color: #2ecc71;
+      }
+
+      .status-dot.disconnected {
+        background-color: #e74c3c;
+      }
+
+      .status-text {
+        color: #aaa;
+        font-size: 14px;
+      }
+
+      @keyframes blink {
+        0% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.4;
+        }
+      }
+
+      /* 通知提示 */
+      .notification {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        text-align: center;
+        max-width: 300px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .notification.active {
+        opacity: 1;
+      }
+
+      @media (max-width: 375px) {
+        .key {
+          padding: 6px 1vw;
+          min-width: 7.2vw;
+          font-size: 10px;
+          height: 34px;
+        }
+      }
+    </style>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.js"></script>
+  </head>
+  <body>
+    <!-- 触摸板 -->
+    <div class="touchpad">
+      <div class="touchpad-cursor"></div>
+    </div>
+
+    <!-- 键盘 -->
+    <div class="keyboard">
+      <!-- 功能键行 -->
+      <div class="row">
+        <div class="key fn-key" data-key="Escape">Esc</div>
+        <div class="key fn-key" data-key="F1">F1</div>
+        <div class="key fn-key" data-key="F2">F2</div>
+        <div class="key fn-key" data-key="F3">F3</div>
+        <div class="key fn-key" data-key="F4">F4</div>
+        <div class="key fn-key" data-key="F5">F5</div>
+        <div class="key fn-key" data-key="F6">F6</div>
+        <div class="key fn-key" data-key="F7">F7</div>
+        <div class="key fn-key" data-key="F8">F8</div>
+        <div class="key fn-key" data-key="F9">F9</div>
+        <div class="key fn-key" data-key="F10">F10</div>
+        <div class="key fn-key" data-key="F11">F11</div>
+        <div class="key fn-key" data-key="F12">F12</div>
+        <div class="key del-key" data-key="Delete">Del</div>
+      </div>
+
+      <!-- 数字行 -->
+      <div class="row">
+        <div class="key" data-key="`">~</div>
+        <div class="key" data-key="1">1</div>
+        <div class="key" data-key="2">2</div>
+        <div class="key" data-key="3">3</div>
+        <div class="key" data-key="4">4</div>
+        <div class="key" data-key="5">5</div>
+        <div class="key" data-key="6">6</div>
+        <div class="key" data-key="7">7</div>
+        <div class="key" data-key="8">8</div>
+        <div class="key" data-key="9">9</div>
+        <div class="key" data-key="0">0</div>
+        <div class="key del-key" data-key="backspace">⌫</div>
+      </div>
+
+      <!-- 主键盘区 -->
+      <div class="row">
+        <div class="key control-key long-key" data-key="Tab">Tab</div>
+        <div class="key" data-key="q">Q</div>
+        <div class="key" data-key="w">W</div>
+        <div class="key" data-key="e">E</div>
+        <div class="key" data-key="r">R</div>
+        <div class="key" data-key="t">T</div>
+        <div class="key" data-key="y">Y</div>
+        <div class="key" data-key="u">U</div>
+        <div class="key" data-key="i">I</div>
+        <div class="key" data-key="o">O</div>
+        <div class="key" data-key="p">P</div>
+        <div class="key" data-key="[">&#91;</div>
+        <div class="key" data-key="]">&#93;</div>
+        <div class="key control-key long-key" data-key="\\">\\</div>
+      </div>
+
+      <div class="row">
+        <div class="key control-key long-key" data-key="capsLock">Caps</div>
+        <div class="key" data-key="a">A</div>
+        <div class="key" data-key="s">S</div>
+        <div class="key" data-key="d">D</div>
+        <div class="key" data-key="f">F</div>
+        <div class="key" data-key="g">G</div>
+        <div class="key" data-key="h">H</div>
+        <div class="key" data-key="j">J</div>
+        <div class="key" data-key="k">K</div>
+        <div class="key" data-key="l">L</div>
+        <div class="key" data-key=";">;</div>
+        <div class="key" data-key="'">'</div>
+        <div class="key control-key long-key" data-key="enter">Enter</div>
+      </div>
+
+      <div class="row">
+        <div class="key control-key long-key" data-key="shift">Shift</div>
+        <div class="key" data-key="z">Z</div>
+        <div class="key" data-key="x">X</div>
+        <div class="key" data-key="c">C</div>
+        <div class="key" data-key="v">V</div>
+        <div class="key" data-key="b">B</div>
+        <div class="key" data-key="n">N</div>
+        <div class="key" data-key="m">M</div>
+        <div class="key" data-key=",">,</div>
+        <div class="key" data-key=".">.</div>
+        <div class="key" data-key="/">/</div>
+        <div class="key control-key long-key" data-key="shift">Shift</div>
+      </div>
+
+      <!-- 控制键行 -->
+      <div class="row">
+        <div class="key control-key" data-key="control">Ctrl</div>
+        <div class="key control-key" data-key="meta">Win</div>
+        <div class="key control-key" data-key="alt">Alt</div>
+        <div class="key space" data-key="space">Space</div>
+        <div class="key control-key" data-key="alt">Alt</div>
+        <div class="key control-key" data-key="meta">Win</div>
+        <div class="key control-key" data-key="contextMenu">Menu</div>
+        <div class="key control-key" data-key="control">Ctrl</div>
+      </div>
+    </div>
+
+    <!-- 连接弹窗 -->
+    <div class="connection-modal" id="connection-modal">
+      <div class="connection-panel">
+        <h1>连接到远程设备</h1>
+        <p>请输入连接码以连接到远程设备</p>
+
+        <div class="id-container">
+          <input
+            type="text"
+            id="connection-id"
+            class="id-input"
+            placeholder="输入连接码"
+            maxlength="5"
+          />
+        </div>
+
+        <div class="status-indicator">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-text" id="status-text">未连接</span>
+        </div>
+
+        <div class="loading-spinner" id="loading-spinner"></div>
+
+        <button id="connect-button" class="connect-button">连接</button>
+      </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div class="notification" id="notification">连接成功!</div>
+
+    <script>
+      // 本地存储
+      const ls = window.localStorage;
+
+      // 连接相关变量
+      let peer;
+      let conn;
+      let customIdPrefix = "MMM-2M-";
+      let isConnected = false;
+      let connectionTimeout;
+      let screenWidth;
+      let screenHeight;
+      const CONNECTION_TIMEOUT_MS = 4000; // 4秒连接超时
+
+      // DOM元素
+      const connectionModal = document.getElementById("connection-modal");
+      const connectionIdInput = document.getElementById("connection-id");
+      const connectButton = document.getElementById("connect-button");
+      const statusDot = document.getElementById("status-dot");
+      const statusText = document.getElementById("status-text");
+      const loadingSpinner = document.getElementById("loading-spinner");
+      const notification = document.getElementById("notification");
+      const touchpad = document.querySelector(".touchpad");
+      const touchpadCursor = document.querySelector(".touchpad-cursor");
+
+      // 初始化PeerJS
+      function initializePeer() {
+        peer = new Peer();
+
+        peer.on("open", function (id) {
+          console.log("我的Peer ID是: " + id);
+        });
+
+        peer.on("error", function (err) {
+          console.error("连接错误:", err);
+          clearTimeout(connectionTimeout);
+          updateConnectionStatus("连接错误");
+          showNotification("连接错误: " + err.message);
+        });
+      }
+
+      // 更新连接状态
+      function updateConnectionStatus(status) {
+        statusDot.className = "status-dot";
+        statusText.textContent = status;
+
+        if (status === "连接中") {
+          statusDot.classList.add("connecting");
+          loadingSpinner.classList.add("active");
+          connectButton.disabled = true;
+        } else if (status === "已连接") {
+          statusDot.classList.add("connected");
+          loadingSpinner.classList.remove("active");
+          connectButton.disabled = false;
+          isConnected = true;
+          connectionModal.style.display = "none";
+        } else if (status.includes("错误") || status === "未连接") {
+          statusDot.classList.add("disconnected");
+          loadingSpinner.classList.remove("active");
+          connectButton.disabled = false;
+          isConnected = false;
+        }
+      }
+
+      // 显示通知
+      function showNotification(message) {
+        notification.textContent = message;
+        notification.classList.add("active");
+
+        setTimeout(() => {
+          notification.classList.remove("active");
+        }, 3000);
+      }
+
+      // 连接到远程设备
+      function connectToRemote(id) {
+        if (!id) return;
+
+        // 添加前缀
+        const fullId = customIdPrefix + id.toUpperCase();
+        updateConnectionStatus("连接中");
+
+        // 保存到本地存储
+        ls.setItem("lastConnectedId", id.toUpperCase());
+
+        // 建立连接
+        conn = peer.connect(fullId);
+
+        conn.on("open", function () {
+          clearTimeout(connectionTimeout);
+          console.log("已连接到: " + fullId);
+          updateConnectionStatus("已连接");
+          showNotification("连接成功!");
+        });
+
+        conn.on("error", function (err) {
+          clearTimeout(connectionTimeout);
+          console.error("连接错误:", err);
+          updateConnectionStatus("连接错误");
+          showNotification("连接错误");
+        });
+
+        conn.on("close", function () {
+          clearTimeout(connectionTimeout);
+          console.log("连接已关闭");
+          updateConnectionStatus("未连接");
+          showNotification("连接已关闭");
+          connectionModal.style.display = "flex";
+        });
+
+        conn.on("data", function (data) {
+          var json = JSON.parse(data);
+          if (json.type === "screen-size") {
+            screenWidth = json.width;
+            screenHeight = json.height;
+          }
+        });
+
+        // 设置连接超时
+        clearTimeout(connectionTimeout);
+        connectionTimeout = setTimeout(() => {
+          if (!isConnected) {
+            ls.removeItem("lastConnectedId");
+            updateConnectionStatus("连接超时");
+            showNotification("连接超时,请检查连接码是否正确");
+            if (conn) {
+              conn.close();
+            }
+            setTimeout(() => {
+              location.reload();
+            }, 1000);
+          }
+        }, CONNECTION_TIMEOUT_MS);
+      }
+
+      // 发送键盘事件
+      function sendKeyboardEvent(key) {
+        if (!conn || !isConnected) return;
+
+        const data = {
+          type: "keyboard",
+          key: key,
+        };
+
+        conn.send(JSON.stringify(data));
+      }
+
+      // 发送鼠标移动事件
+      function sendMouseMoveEvent(x, y) {
+        if (!conn || !isConnected) return;
+
+        const data = {
+          type: "mouse-move",
+          targetX: x,
+          targetY: y,
+        };
+
+        conn.send(JSON.stringify(data));
+      }
+      //发送鼠标事件
+      function sendMouseClickEvent(event) {
+        if (!conn || !isConnected) return;
+
+        const data = {
+          type: "mouse-event",
+          event: event,
+        };
+
+        conn.send(JSON.stringify(data));
+      }
+      // 触摸板事件处理
+      function setupTouchpad() {
+        //标左键按下应该是点击
+        touchpad.addEventListener("click", function (e) {
+          e.preventDefault();
+          sendMouseClickEvent("mousedown");
+        });
+
+        touchpad.addEventListener("touchmove", function (e) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          touchToMouse(touch);
+        });
+
+        touchpad.addEventListener("touchend", function (e) {
+          isDragging = false;
+          touchpadCursor.classList.remove("active");
+        });
+
+        // 防止触摸板上的滚动和缩放
+        touchpad.addEventListener("touchcancel", function (e) {
+          isDragging = false;
+          touchpadCursor.classList.remove("active");
+        });
+      }
+
+      function touchToMouse(touch) {
+        const touchpadRect = touchpad.getBoundingClientRect();
+        const relativeX =
+          (touch.clientX - touchpadRect.left) / touchpadRect.width;
+        const relativeY =
+          (touch.clientY - touchpadRect.top) / touchpadRect.height;
+
+        const screenX = Math.round(screenWidth * relativeX);
+        const screenY = Math.round(screenHeight * relativeY);
+
+        // 更新虚拟光标位置（按比例显示）
+        touchpadCursor.classList.add("active");
+        touchpadCursor.style.left = `${relativeX * 100}%`;
+        touchpadCursor.style.top = `${relativeY * 100}%`;
+
+        // 发送相对坐标事件
+        sendMouseMoveEvent(screenX, screenY);
+      }
+      function clamp(value, min = 0, max = 1) {
+        return Math.max(min, Math.min(value, max));
+      }
+
+      // 键盘事件处理
+      function setupKeyboard() {
+        document.querySelectorAll(".key").forEach((key) => {
+          key.addEventListener("touchstart", function (e) {
+            e.preventDefault();
+            this.style.transform = "scale(0.95)";
+            this.style.backgroundColor = "#444";
+
+            if (navigator.vibrate) navigator.vibrate(8);
+
+            // 发送键盘事件
+            const keyValue = this.getAttribute("data-key");
+            if (keyValue) {
+              sendKeyboardEvent(keyValue);
+            }
+          });
+
+          key.addEventListener("touchend", function () {
+            this.style.transform = "scale(1)";
+
+            // 恢复原来的背景色
+            if (this.classList.contains("del-key")) {
+              this.style.backgroundColor = "#631111";
+            } else if (this.classList.contains("control-key")) {
+              this.style.backgroundColor = "#444";
+            } else if (this.classList.contains("fn-key")) {
+              this.style.backgroundColor = "#333";
+            } else {
+              this.style.backgroundColor = "#2a2a2a";
+            }
+          });
+        });
+      }
+
+      // 初始化应用
+      function initializeApp() {
+        initializePeer();
+        setupTouchpad();
+        setupKeyboard();
+
+        // 连接按钮事件
+        connectButton.addEventListener("click", function () {
+          const id = connectionIdInput.value.trim();
+          if (id) {
+            connectToRemote(id);
+          } else {
+            showNotification("请输入有效的连接码");
+          }
+        });
+
+        // 输入框回车事件
+        connectionIdInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            const id = connectionIdInput.value.trim();
+            if (id) {
+              connectToRemote(id);
+            } else {
+              showNotification("请输入有效的连接码");
+            }
+          }
+        });
+
+        // 检查本地存储中是否有上次连接的ID
+        const lastConnectedId = ls.getItem("lastConnectedId");
+        if (lastConnectedId) {
+          connectionIdInput.value = lastConnectedId;
+          // 自动尝试连接
+          setTimeout(() => {
+            connectToRemote(lastConnectedId);
+          }, 3000);
+        }
+      }
+
+      // 页面加载完成后初始化
+      document.addEventListener("DOMContentLoaded", initializeApp);
+    </script>
+  </body>
+</html>

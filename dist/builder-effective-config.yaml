@@ -1,0 +1,11 @@
+directories:
+  output: dist
+  buildResources: build
+electronVersion: 4.1.2
+appId: com.remote-pulse.peerinput
+productName: RemotePulse - PeerInput
+copyright: Copyright © 2025 ${author}
+win:
+  target:
+    - portable
+files: []
